@@ -147,12 +147,14 @@ Have HANDLER be called with the result."
         (push `(setq ,symbol ',(symbol-value symbol)) form)))
     form))
 
+;;;###autoload
 (defmacro async-eval (sentinel &rest body)
   "Evaluate BODY in a separate process and call HANDLER with the result.
 HANDLER should be a function that accepts one argument."
   (declare (indent 1) (debug t))
   `(async-eval-form ,sentinel (quote (progn ,@body))))
 
+;;;###autoload
 (defmacro async-eval-with-export (symbols sentinel &rest body)
   "Evaluate BODY in a separate process and call HANDLER with the result.
 SYMBOLS is a list of variables and functions that are exported to the process,
