@@ -79,6 +79,8 @@
 ;;
 ;;; Change Log:
 ;;
+;;    Messages produced by the body are no longer being parsed.
+;;
 ;; 2009-03-09 (0.1)
 ;;    Initial release.
 ;;
@@ -104,11 +106,13 @@ If this is nil, the program from the current process is used."
   (when (eq (process-status proc) 'exit)
     (let ((buffer (process-get proc 'async-eval-buffer)))
       (unwind-protect
-          (if (= 0 (process-exit-status proc))
-              (eval-buffer buffer)
-            (error "%s(async-eval execution failed)"
-                   (with-current-buffer buffer
-                     (buffer-string)))))
+          (with-current-buffer buffer
+            (or (and (= 0 (process-exit-status proc))
+                     (goto-char (point-min))
+                     (search-forward "ASYNC-EVAL-START-POINT" nil t)
+                     (read buffer))
+                (error "%s(async-eval execution failed)"
+                       (buffer-string)))))
       (kill-buffer buffer))))
 
 (defun async-eval-filter (proc output)
@@ -120,7 +124,8 @@ If this is nil, the program from the current process is used."
   "Format FORM to be evaluateable by an Emacs process.
 Have HANDLER be called with the result."
   ;; Make sure %s in sentinel or text isn't expanded twice!
-  (format "(message \"(funcall '%%S '%%S)\" '%S %S)" handler (prin1 form)))
+  (format "(message \"ASYNC-EVAL-START-POINT\n(funcall '%%S '%%S)\" '%S %S)"
+          handler (prin1 form)))
 
 (defun async-eval-form (handler form)
   "Evaluate FORM in a separate process and call HANDLER with the result."
