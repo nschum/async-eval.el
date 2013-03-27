@@ -107,12 +107,12 @@ If this is nil, the program from the current process is used."
     (let ((buffer (process-get proc 'async-eval-buffer)))
       (unwind-protect
           (with-current-buffer buffer
-            (or (and (= 0 (process-exit-status proc))
+            (if (and (= 0 (process-exit-status proc))
                      (goto-char (point-min))
-                     (search-forward "ASYNC-EVAL-START-POINT" nil t)
-                     (read buffer))
-                (error "%s(async-eval execution failed)"
-                       (buffer-string)))))
+                     (search-forward "ASYNC-EVAL-START-POINT" nil t))
+                (eval (read buffer))
+              (error "%s(async-eval execution failed)"
+                     (buffer-string)))))
       (kill-buffer buffer))))
 
 (defun async-eval-filter (proc output)
